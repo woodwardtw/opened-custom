@@ -271,3 +271,33 @@ function opened_author_cap_filter( $allowedposttags ) {
     return $allowedposttags;
 
 }
+
+
+//semi super admin adjuster 
+
+add_filter('map_meta_cap', 'less_super_admins', 10, 4);
+function less_super_admins($caps, $cap, $user_id, $args){
+
+    $super = array(
+        'update_core',
+        'update_plugins',
+        'update_themes',
+        'upgrade_network',
+        'install_plugins',
+        'install_themes',
+        'delete_themes',
+        'delete_plugins',        
+        'edit_plugins',
+        'edit_themes',
+        'delete_sites',
+        'setup_network',
+        'manage_network_plugins',     //these are big removals of all the access to these items   
+        'manage_network_themes',
+        'manage_network_options',
+    );
+    $still_super = [1,2,3,4,5,233,595];//user IDs for super admins to retain FULL RIGHTS - all other super admins are limited as defined above
+    if($user_id != in_array($user_id,$still_super) && in_array($cap, $super)) {
+        $caps[] = 'do_not_allow';
+    }
+    return $caps;
+}
