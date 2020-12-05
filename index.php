@@ -136,7 +136,7 @@ function remove_selected_blogs_from_get_blogs($blogs) {
     $newblogs = array();
     $user_id = wp_get_current_user()->ID;
     $hidden_blogs = explode(",",hidden_blogs($user_id));
-    if ( !is_super_admin() &&  $pagenow != 'profile.php') {
+    if ( $pagenow != 'profile.php') { // remove !is_super_admin() &&
         foreach ($blogs as $key => $value) {
             if (!in_array($value->userblog_id, $hidden_blogs) )
                 $newblogs[$key] = $value;
@@ -300,4 +300,62 @@ function less_super_admins($caps, $cap, $user_id, $args){
         $caps[] = 'do_not_allow';
     }
     return $caps;
+}
+
+
+// Hook to columns on network sites listing
+add_filter( 'wpmu_blogs_columns', 'mfs_blogs_columns' );
+ 
+/**
+* To add a columns to the sites columns
+*
+* @param array
+*
+* @return array
+*/
+function mfs_blogs_columns($sites_columns)
+{
+    //array_slice ( array $array , int $offset [, int|null $length = NULL [, bool $preserve_keys = FALSE ]] ) : array
+
+    $columns_1 = array_slice( $sites_columns, 1, 2 );
+    $columns_2 = array_slice( $sites_columns, 2 );
+     
+    $sites_columns = $columns_1 + array( 'content' => 'Posts/Pages' ) + $columns_2;
+     
+    return $sites_columns;
+}
+
+function sort_mfs_sites_custom_column(){
+    $columns['content'] = 'Posts/Pages';
+    return $columns;
+}
+
+
+// Hook to manage column data on network sites listing
+add_action( 'manage_sites_custom_column', 'mfs_sites_custom_column', 10, 2 );
+
+/**
+* Show page post count
+*
+* @param string
+* @param integer
+*
+* @return void
+*/
+function mfs_sites_custom_column($column_name, $blog_id)
+{
+    if ( $column_name == 'content' ) {
+         switch_to_blog($blog_id);
+            $pages = wp_count_posts('page','publish')->publish;
+            $posts = wp_count_posts('post', 'publish')->publish;
+    restore_current_blog();
+   
+    if ($posts < 1){
+        $posts = 0;
+    }
+    if ($pages < 1){
+        $pages = 0;
+    }
+        echo  $posts . '/' . $pages ;
+    }
 }
